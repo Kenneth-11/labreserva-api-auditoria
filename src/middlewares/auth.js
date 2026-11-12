@@ -1,20 +1,33 @@
 import { verifyToken } from '../lib/jwt.js';
 import { HttpError } from '../utils/http-error.js';
+import { usersRepository } from '../modules/users/users.repository.js';
 
+// Autenticación: ¿quién eres? Verifica la firma y expiración, y luego carga al usuario REAL desde la BD,
+// así un usuario eliminado pierde acceso y el rol nunca se toma de lo que diga el token.
 export function requireAuth(req, _res, next) {
-  const token = req.get('authorization')?.replace('Bearer ', '');
-  if (!token) throw new HttpError(401, 'Token requerido');
+  const [scheme, token] = (req.get('authorization') ?? '').split(' ');
+  if (scheme !== 'Bearer' || !token) throw new HttpError(401, 'Token requerido');
 
+  let payload;
   try {
-    const payload = verifyToken(token);
-    req.user = { id: Number(payload.sub), email: payload.email, role: payload.role };
+    payload = verifyToken(token);
   } catch {
-    throw new HttpError(401, 'Token inválido');
+    throw new HttpError(401, 'Token inválido o vencido');
   }
+
+  const user = usersRepository.findById(Number(payload.sub));
+  if (!user) throw new HttpError(401, 'Token inválido o vencido');
+
+  req.user = { id: user.id, email: user.email, role: user.role };
   next();
 }
 
-export function requireAdmin(req, _res, next) {
-  if (req.user?.role !== 'admin') throw new HttpError(403, 'Solo para administradores');
-  next();
-}
+// Autorización por rol (mínimo privilegio): falla cerrado si no hay usuario o el rol no está permitido.
+export const requireRole =
+  (...roles) =>
+  (req, _res, next) => {
+    if (!roles.includes(req.user?.role)) throw new HttpError(403, 'No tiene permisos para esta operación');
+    next();
+  };
+
+export const requireAdmin = requireRole('admin');
