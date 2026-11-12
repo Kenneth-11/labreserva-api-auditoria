@@ -6,6 +6,8 @@ import { usersRepository } from '../users/users.repository.js';
 
 export const authRouter = Router();
 
+const DUMMY_HASH = hashPassword('contraseña-que-nadie-usa');
+
 authRouter.post('/register', (req, res) => {
   const { name, email, password, carnet } = req.body;
   if (!name || !email || !password) throw new HttpError(400, 'Nombre, email y contraseña son obligatorios');
@@ -24,9 +26,11 @@ authRouter.post('/register', (req, res) => {
 authRouter.post('/login', (req, res) => {
   const { email, password } = req.body;
 
-  const user = usersRepository.findByEmailWithHash(email);
-  if (!user) throw new HttpError(404, 'No existe un usuario con ese email');
-  if (!verifyPassword(password, user.password_hash)) throw new HttpError(401, 'Contraseña incorrecta');
+  // Mismo mensaje y mismo código si el email no existe o la contraseña falla (no se enumeran cuentas).
+  // Si el usuario no existe se verifica contra un hash falso para que el tiempo de respuesta sea parecido.
+  const user = typeof email === 'string' ? usersRepository.findByEmailWithHash(email) : undefined;
+  const ok = verifyPassword(String(password ?? ''), user?.password_hash ?? DUMMY_HASH);
+  if (!user || !ok) throw new HttpError(401, 'Credenciales inválidas');
 
   res.json({
     token: signToken(user),
