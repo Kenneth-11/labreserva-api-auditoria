@@ -7,13 +7,15 @@ import { usersRepository } from '../users/users.repository.js';
 
 export const adminRouter = Router();
 
-adminRouter.use(requireAuth);
+// Mediación completa y falla cerrado: TODO lo que cuelga de /admin exige autenticación Y rol admin.
+// Si mañana se agrega una ruta nueva aquí, hereda la protección sin que nadie tenga que acordarse.
+adminRouter.use(requireAuth, requireAdmin);
 
-adminRouter.get('/reservations', requireAdmin, (_req, res) => {
+adminRouter.get('/reservations', (_req, res) => {
   res.json(reservationsRepository.findAll());
 });
 
-adminRouter.post('/labs', requireAdmin, (req, res) => {
+adminRouter.post('/labs', (req, res) => {
   const { name, building, capacity } = req.body;
   if (!name || !building || !capacity) throw new HttpError(400, 'name, building y capacity son obligatorios');
   res.status(201).json(labsRepository.create(req.body));
