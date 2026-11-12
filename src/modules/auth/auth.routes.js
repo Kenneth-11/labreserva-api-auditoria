@@ -22,7 +22,6 @@ authRouter.post('/register', (req, res) => {
 });
 
 authRouter.post('/login', (req, res) => {
-  console.log('Intento de login:', req.body);
   const { email, password } = req.body;
 
   const user = usersRepository.findByEmailWithHash(email);
