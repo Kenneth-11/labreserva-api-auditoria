@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { HttpError } from '../../utils/http-error.js';
 import { requireAuth } from '../../middlewares/auth.js';
+import { parseId } from '../../utils/parse-id.js';
 import { labsRepository } from '../labs/labs.repository.js';
 import { reservationsRepository } from './reservations.repository.js';
 
@@ -14,7 +15,9 @@ reservationsRouter.get('/', (req, res) => {
 });
 
 reservationsRouter.get('/:id', (req, res) => {
-  const reservation = reservationsRepository.findById(req.params.id);
+  // El userId sale del token verificado, nunca de la URL ni del body.
+  const reservation = reservationsRepository.findById(parseId(req.params.id), req.user.id);
+  // 404 (no 403) para una reserva ajena: no confirma que exista.
   if (!reservation) throw new HttpError(404, 'Reserva no encontrada');
   res.json(reservation);
 });
@@ -42,6 +45,6 @@ reservationsRouter.post('/', (req, res) => {
 });
 
 reservationsRouter.delete('/:id', (req, res) => {
-  if (!reservationsRepository.remove(req.params.id)) throw new HttpError(404, 'Reserva no encontrada');
+  if (!reservationsRepository.remove(parseId(req.params.id), req.user.id)) throw new HttpError(404, 'Reserva no encontrada');
   res.status(204).end();
 });

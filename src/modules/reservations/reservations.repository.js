@@ -13,8 +13,10 @@ export const reservationsRepository = {
     return db.prepare(`SELECT ${COLUMNS} ${FROM} WHERE r.user_id = ? ORDER BY r.date, r.start_hour`).all(userId);
   },
 
-  findById(id) {
-    return db.prepare(`SELECT ${COLUMNS} ${FROM} WHERE r.id = ?`).get(id);
+  // Sin userId no existe forma de leer una reserva: el filtro por dueño vive aquí, en la capa de datos,
+  // para que ninguna ruta nueva pueda olvidarlo. `create` relee la fila recién insertada con su propia consulta.
+  findById(id, userId) {
+    return db.prepare(`SELECT ${COLUMNS} ${FROM} WHERE r.id = ? AND r.user_id = ?`).get(id, userId);
   },
 
   findOverlapping(labId, date, startHour, endHour) {
@@ -31,10 +33,10 @@ export const reservationsRepository = {
         'INSERT INTO reservations (lab_id, user_id, date, start_hour, end_hour, purpose) VALUES (?, ?, ?, ?, ?, ?)',
       )
       .run(labId, userId, date, startHour, endHour, purpose);
-    return this.findById(lastInsertRowid);
+    return db.prepare(`SELECT ${COLUMNS} ${FROM} WHERE r.id = ?`).get(lastInsertRowid);
   },
 
-  remove(id) {
-    return db.prepare('DELETE FROM reservations WHERE id = ?').run(id).changes > 0;
+  remove(id, userId) {
+    return db.prepare('DELETE FROM reservations WHERE id = ? AND user_id = ?').run(id, userId).changes > 0;
   },
 };
