@@ -2,7 +2,8 @@
 
 Sistema para reservar los laboratorios de la escuela. Lo desarrolló un equipo externo con prisa y **sale a producción la próxima semana**. Antes de eso, la dirección les pidió a ustedes una auditoría de seguridad.
 
-> ⚠️ **Este proyecto es inseguro a propósito.** Úselo solo en su computadora, para la actividad del curso. No lo despliegue en internet.
+> ✅ **Versión corregida** tras la auditoría de la Semana 14 (ver `INFORME_AUDITORIA.md` y `git log`: un commit por hallazgo).
+> Aun así, úselo solo en su computadora para la actividad del curso.
 
 ## Puesta en marcha
 
@@ -10,8 +11,11 @@ Requiere **Node.js 22.13 o superior** (usa SQLite incluido en Node, no hay que i
 
 ```bash
 npm install
+cp .env.example .env      # y completar JWT_SECRET (mín. 32 caracteres aleatorios)
 npm run dev
 ```
+
+Generar un secreto: `node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"`
 
 - Frontend: <http://localhost:3000>
 - API: <http://localhost:3000/api>
@@ -75,3 +79,18 @@ files/manuales/          manuales que descarga /api/files
 ```
 
 Ver `requests.http` para ejemplos listos (extensión **REST Client** de VS Code).
+
+## Seguridad
+
+| Control | Dónde |
+|---|---|
+| Secretos en `.env` (fuera de git), la API **no arranca** sin `JWT_SECRET` fuerte | `src/config.js` |
+| JWT HS256 fijo, expira en 15 min, el rol se lee de la BD | `src/lib/jwt.js`, `src/middlewares/auth.js` |
+| Contraseñas con scrypt + sal | `src/lib/password.js` |
+| helmet, CORS restringido (`CORS_ORIGINS`), body ≤ 10 KB, rate limit | `src/app.js`, `src/middlewares/rate-limit.js` |
+| Validación estricta con zod en cada endpoint que recibe datos | `*.routes.js` |
+| Filtro por dueño en el repositorio (anti IDOR) | `reservations.repository.js` |
+| Errores genéricos (sin stack) y log de auditoría sin secretos | `src/middlewares/error-handler.js`, `src/lib/audit.js` |
+
+Para verificar: levante el servidor y corra `npm run attacks`. Debe reportar **0 ataques exitosos**.
+Decisiones de diseño en `docs/adr/`.

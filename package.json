@@ -1,13 +1,14 @@
 {
   "name": "labreserva-api",
-  "version": "0.9.0",
-  "description": "LabReserva: API de reservas de laboratorios (versión previa a producción)",
+  "version": "1.0.0",
+  "description": "LabReserva: API de reservas de laboratorios (corregida tras la auditoría de seguridad, Semana 14)",
   "private": true,
   "type": "module",
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch --env-file=.env --disable-warning=ExperimentalWarning src/server.js",
-    "start": "node --env-file=.env --disable-warning=ExperimentalWarning src/server.js"
+    "start": "node --env-file=.env --disable-warning=ExperimentalWarning src/server.js",
+    "attacks": "node --env-file=.env --disable-warning=ExperimentalWarning scripts/attacks.mjs"
   },
   "engines": {
     "node": ">=22.13"

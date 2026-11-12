@@ -42,3 +42,73 @@ GET {{base}}/files
 
 ### Descargar un manual
 GET {{base}}/files?name=laboratorio-redes.txt
+
+
+################################################################################
+# PARTE C · ATAQUES DE LA AUDITORÍA (todos deben FALLAR en la versión corregida)
+# Solo contra su copia en localhost. Para correrlos todos de una vez: npm run attacks
+# Antes del arreglo cada uno funcionaba; el resultado esperado ahora está en el comentario.
+################################################################################
+
+### F01 · Config filtrada → esperado: 404
+GET {{base}}/debug/config
+
+### F02/F22 · Token forjado con el secreto viejo "supersecreto" → esperado: 401
+# (eyJ... = {"sub":"999","role":"admin"} firmado con HS256 y "supersecreto"; generar con scripts/attacks.mjs)
+GET {{base}}/admin/reservations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OTkiLCJyb2xlIjoiYWRtaW4ifQ.firma-invalida
+
+### F03 · Estudiante elimina usuarios → esperado: 403
+DELETE {{base}}/admin/users/4
+Authorization: Bearer {{token}}
+
+### F04 · IDOR: leer la reserva 1 (de Beto) con el token de Ana → esperado: 404
+GET {{base}}/reservations/1
+Authorization: Bearer {{token}}
+
+### F04 · IDOR: cancelar la reserva 3 (del profesor) → esperado: 404
+DELETE {{base}}/reservations/3
+Authorization: Bearer {{token}}
+
+### F05 · Escalada de privilegios por mass assignment → esperado: 400
+PATCH {{base}}/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "role": "admin" }
+
+### F06 · SQL injection (UNION) → esperado: 200 con lista vacía, sin emails ni hashes
+GET {{base}}/labs?search=x' UNION SELECT id, email, password_hash, 0, role FROM users--
+
+### F07 · Path traversal → esperado: 400
+GET {{base}}/files?name=../../.env
+
+### F08 · Directorio con hashes siendo estudiante → esperado: 403
+GET {{base}}/users
+Authorization: Bearer {{token}}
+
+### F11 · Enumeración de usuarios (ambos deben dar 401 "Credenciales inválidas")
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "nadie@labreserva.test", "password": "x" }
+
+### F14 · Stack trace → esperado: 404 {"error":"Ruta no encontrada"} sin stack
+GET {{base}}/no-existe
+
+### F15 · Body gigante → esperado: 413 (generar uno de >10 KB)
+# Ver el caso automatizado en scripts/attacks.mjs
+
+### F18 · Entrada inválida en reservas → esperado: 400
+POST {{base}}/reservations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "labId": 3, "date": "cualquier-cosa", "startHour": -5, "endHour": 99, "purpose": "x" }
+
+### F10 · XSS almacenado: el comentario se guarda tal cual, pero el frontend lo escapa (probar en http://localhost:3000)
+POST {{base}}/labs/1/comments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "body": "<img src=x onerror=alert('xss')>" }
