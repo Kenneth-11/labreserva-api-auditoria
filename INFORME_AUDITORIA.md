@@ -130,3 +130,10 @@ Copy-Item .env.example .env
 ## 10. Conclusión
 
 Los 22 hallazgos identificados en la versión recibida están corregidos y cuentan con evidencia de verificación. La batería automatizada no logra explotar ninguno de los casos y `npm audit` no reporta vulnerabilidades conocidas en las dependencias instaladas. El proyecto queda apto para la actividad del curso; antes de un despliegue real deben atenderse los riesgos residuales de la sección 8.
+
+## 11. Documentos complementarios de la entrega
+
+- `PARTE_A_MODELADO.md`: DFD, hipótesis STRIDE, priorización del riesgo y respuestas a las tres preguntas de diseño.
+- `PARTE_B_HALLAZGOS.md`: fichas de los 22 hallazgos con pasos de reproducción, evidencia (request y respuesta), causa raíz con archivo y línea, corrección y capa.
+- `requests.http`: ejemplos listos, incluidos los ataques de la Parte C.
+- `scripts/attacks.mjs`: verificación automatizada de los 22 hallazgos y sus cadenas.

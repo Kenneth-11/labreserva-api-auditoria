@@ -81,9 +81,17 @@ files/manuales/          manuales que descarga /api/files
 docs/adr/                decisiones de diseño (ADR-001)
 scripts/attacks.mjs      verificación automatizada de los 22 ataques
 INFORME_AUDITORIA.md     informe de auditoría (F01–F22)
+PARTE_A_MODELADO.md      DFD, hipótesis STRIDE y respuestas de diseño
+PARTE_B_HALLAZGOS.md     fichas de hallazgos (pasos, evidencia y causa raíz)
 ```
 
 Ver `requests.http` para ejemplos listos (extensión **REST Client** de VS Code).
+
+## Documentos de la entrega
+
+- `INFORME_AUDITORIA.md` — resumen ejecutivo, verificación y riesgos residuales.
+- `PARTE_A_MODELADO.md` — DFD, hipótesis STRIDE, priorización y respuestas a las tres preguntas de diseño.
+- `PARTE_B_HALLAZGOS.md` — fichas de los 22 hallazgos con pasos, evidencia, causa raíz, corrección y capa.
 
 ## Seguridad
 
