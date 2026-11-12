@@ -1,16 +1,24 @@
 import { db } from '../../db.js';
 
+// Columnas públicas: password_hash NUNCA sale de aquí salvo para verificar el login.
+const PUBLIC_COLUMNS = 'id, name, email, role, carnet, phone, created_at';
+
 export const usersRepository = {
   findAll() {
-    return db.prepare('SELECT * FROM users ORDER BY name').all();
+    return db.prepare(`SELECT ${PUBLIC_COLUMNS} FROM users ORDER BY name`).all();
   },
 
   findById(id) {
-    return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    return db.prepare(`SELECT ${PUBLIC_COLUMNS} FROM users WHERE id = ?`).get(id);
+  },
+
+  // Único método que devuelve password_hash: solo lo usa el login.
+  findByEmailWithHash(email) {
+    return db.prepare('SELECT * FROM users WHERE email = ?').get(email);
   },
 
   findByEmail(email) {
-    return db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    return db.prepare(`SELECT ${PUBLIC_COLUMNS} FROM users WHERE email = ?`).get(email);
   },
 
   create({ name, email, passwordHash, role, carnet }) {

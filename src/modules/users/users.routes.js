@@ -1,22 +1,20 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from '../../middlewares/auth.js';
+import { requireAuth, requireRole } from '../../middlewares/auth.js';
 import { validate } from '../../utils/validate.js';
 import { usersRepository } from './users.repository.js';
 
 export const usersRouter = Router();
 
-const withoutHash = ({ password_hash, ...user }) => user;
-
 usersRouter.use(requireAuth);
 
-// Directorio: (se restringe y se limpia en F08)
-usersRouter.get('/', (_req, res) => {
+// Directorio: solo profesores y admin (como dice el README), y sin password_hash.
+usersRouter.get('/', requireRole('profesor', 'admin'), (_req, res) => {
   res.json(usersRepository.findAll());
 });
 
 usersRouter.get('/me', (req, res) => {
-  res.json(withoutHash(usersRepository.findById(req.user.id)));
+  res.json(usersRepository.findById(req.user.id));
 });
 
 // Lista blanca: solo estos campos son editables, y cualquier campo extra (role, id, email...) se rechaza.
@@ -30,12 +28,10 @@ usersRouter.patch('/me', (req, res) => {
   const changes = validate(profileSchema, req.body);
   const current = usersRepository.findById(req.user.id);
   res.json(
-    withoutHash(
-      usersRepository.updateProfile(req.user.id, {
-        name: changes.name ?? current.name,
-        phone: changes.phone ?? current.phone,
-        carnet: changes.carnet ?? current.carnet,
-      }),
-    ),
+    usersRepository.updateProfile(req.user.id, {
+      name: changes.name ?? current.name,
+      phone: changes.phone ?? current.phone,
+      carnet: changes.carnet ?? current.carnet,
+    }),
   );
 });

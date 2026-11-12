@@ -25,7 +25,7 @@ authRouter.post('/login', (req, res) => {
   console.log('Intento de login:', req.body);
   const { email, password } = req.body;
 
-  const user = usersRepository.findByEmail(email);
+  const user = usersRepository.findByEmailWithHash(email);
   if (!user) throw new HttpError(404, 'No existe un usuario con ese email');
   if (!verifyPassword(password, user.password_hash)) throw new HttpError(401, 'Contraseña incorrecta');
 
