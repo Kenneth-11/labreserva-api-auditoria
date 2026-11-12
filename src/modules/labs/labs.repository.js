@@ -1,14 +1,16 @@
 import { db } from '../../db.js';
 
 export const labsRepository = {
+  // Consulta parametrizada: el término viaja como dato, nunca se concatena al SQL.
   search(term = '') {
+    const pattern = `%${String(term).slice(0, 100)}%`;
     return db
       .prepare(
         `SELECT id, name, building, capacity, description FROM labs
-         WHERE name LIKE '%${term}%' OR building LIKE '%${term}%'
+         WHERE name LIKE ? OR building LIKE ?
          ORDER BY name`,
       )
-      .all();
+      .all(pattern, pattern);
   },
 
   findById(id) {
