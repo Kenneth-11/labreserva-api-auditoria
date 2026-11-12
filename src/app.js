@@ -16,8 +16,8 @@ export function createApp() {
 
   app.use('/api', apiLimiter, apiRouter);
 
-  app.use((req) => {
-    throw new HttpError(404, `No existe la ruta ${req.method} ${req.originalUrl}`);
+  app.use(() => {
+    throw new HttpError(404, 'Ruta no encontrada');
   });
   app.use(errorHandler);
 
