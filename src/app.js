@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { apiRouter } from './routes.js';
+import { apiLimiter } from './middlewares/rate-limit.js';
 import { errorHandler } from './middlewares/error-handler.js';
 import { HttpError } from './utils/http-error.js';
 
@@ -13,7 +14,7 @@ export function createApp() {
   app.use(morgan('dev'));
   app.use(express.static('public'));
 
-  app.use('/api', apiRouter);
+  app.use('/api', apiLimiter, apiRouter);
 
   app.use((req) => {
     throw new HttpError(404, `No existe la ruta ${req.method} ${req.originalUrl}`);

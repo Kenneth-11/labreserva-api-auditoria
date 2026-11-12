@@ -2,13 +2,14 @@ import { Router } from 'express';
 import { HttpError } from '../../utils/http-error.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
 import { signToken } from '../../lib/jwt.js';
+import { loginLimiter, authIpLimiter } from '../../middlewares/rate-limit.js';
 import { usersRepository } from '../users/users.repository.js';
 
 export const authRouter = Router();
 
 const DUMMY_HASH = hashPassword('contraseña-que-nadie-usa');
 
-authRouter.post('/register', (req, res) => {
+authRouter.post('/register', authIpLimiter, (req, res) => {
   const { name, email, password, carnet } = req.body;
   if (!name || !email || !password) throw new HttpError(400, 'Nombre, email y contraseña son obligatorios');
   if (usersRepository.findByEmail(email)) throw new HttpError(409, 'El email ya está registrado');
@@ -23,7 +24,7 @@ authRouter.post('/register', (req, res) => {
   res.status(201).json(user);
 });
 
-authRouter.post('/login', (req, res) => {
+authRouter.post('/login', authIpLimiter, loginLimiter, (req, res) => {
   const { email, password } = req.body;
 
   // Mismo mensaje y mismo código si el email no existe o la contraseña falla (no se enumeran cuentas).
