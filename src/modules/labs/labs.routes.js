@@ -1,10 +1,14 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { HttpError } from '../../utils/http-error.js';
 import { requireAuth } from '../../middlewares/auth.js';
 import { parseId } from '../../utils/parse-id.js';
+import { validate } from '../../utils/validate.js';
 import { labsRepository } from './labs.repository.js';
 
 export const labsRouter = Router();
+
+const commentSchema = z.strictObject({ body: z.string().trim().min(1).max(500) });
 
 // Público: cualquiera puede ver los laboratorios disponibles.
 labsRouter.get('/', (req, res) => {
@@ -22,6 +26,6 @@ labsRouter.get('/:id', (req, res) => {
 labsRouter.post('/:id/comments', requireAuth, (req, res) => {
   const lab = labsRepository.findById(parseId(req.params.id));
   if (!lab) throw new HttpError(404, 'Laboratorio no encontrado');
-  if (!req.body?.body) throw new HttpError(400, 'El comentario no puede estar vacío');
-  res.status(201).json(labsRepository.addComment(lab.id, req.user.id, req.body.body));
+  const { body } = validate(commentSchema, req.body);
+  res.status(201).json(labsRepository.addComment(lab.id, req.user.id, body));
 });
