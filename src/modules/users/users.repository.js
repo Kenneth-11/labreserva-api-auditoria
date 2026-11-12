@@ -20,16 +20,10 @@ export const usersRepository = {
     return db.prepare('SELECT id, name, email, role, carnet FROM users WHERE id = ?').get(lastInsertRowid);
   },
 
-  update(user) {
-    db.prepare('UPDATE users SET name = ?, email = ?, role = ?, carnet = ?, phone = ? WHERE id = ?').run(
-      user.name,
-      user.email,
-      user.role,
-      user.carnet,
-      user.phone,
-      user.id,
-    );
-    return this.findById(user.id);
+  // Solo los campos que el usuario puede editar de su propio perfil. role, email e id no están aquí.
+  updateProfile(id, { name, phone, carnet }) {
+    db.prepare('UPDATE users SET name = ?, phone = ?, carnet = ? WHERE id = ?').run(name, phone, carnet, id);
+    return this.findById(id);
   },
 
   remove(id) {
