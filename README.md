@@ -4,6 +4,8 @@ Sistema para reservar los laboratorios de la escuela. Lo desarrolló un equipo e
 
 > ✅ **Versión corregida** tras la auditoría de la Semana 14 (ver `INFORME_AUDITORIA.md` y `git log`: un commit por hallazgo).
 > Aun así, úselo solo en su computadora para la actividad del curso.
+>
+> El `.env` original quedó en el historial de git: el `JWT_SECRET` anterior se considera comprometido y fue rotado (F20/F02). El `.env` actual no se versiona.
 
 ## Puesta en marcha
 
@@ -73,9 +75,12 @@ src/
 ├── db.js                esquema y datos iniciales (SQLite en memoria)
 ├── lib/                 jwt, contraseñas
 ├── middlewares/         auth, manejo de errores
-└── modules/             auth, users, labs, reservations, files, admin, debug
+└── modules/             auth, users, labs, reservations, files, admin
 public/                  frontend (HTML + JS sin frameworks)
 files/manuales/          manuales que descarga /api/files
+docs/adr/                decisiones de diseño (ADR-001)
+scripts/attacks.mjs      verificación automatizada de los 22 ataques
+INFORME_AUDITORIA.md     informe de auditoría (F01–F22)
 ```
 
 Ver `requests.http` para ejemplos listos (extensión **REST Client** de VS Code).
@@ -90,7 +95,9 @@ Ver `requests.http` para ejemplos listos (extensión **REST Client** de VS Code)
 | helmet, CORS restringido (`CORS_ORIGINS`), body ≤ 10 KB, rate limit | `src/app.js`, `src/middlewares/rate-limit.js` |
 | Validación estricta con zod en cada endpoint que recibe datos | `*.routes.js` |
 | Filtro por dueño en el repositorio (anti IDOR) | `reservations.repository.js` |
+| Integridad referencial activa (`PRAGMA foreign_keys = ON`) | `src/db.js` |
 | Errores genéricos (sin stack) y log de auditoría sin secretos | `src/middlewares/error-handler.js`, `src/lib/audit.js` |
 
 Para verificar: levante el servidor y corra `npm run attacks`. Debe reportar **0 ataques exitosos**.
+Verificado el 2026-11-12 con Node.js v25.9.0: **0 ataques exitosos (24/24 bloqueados)** y `npm audit` sin vulnerabilidades.
 Decisiones de diseño en `docs/adr/`.

@@ -44,6 +44,8 @@ db.exec(`
   );
 `);
 
+db.exec('PRAGMA foreign_keys = ON;');
+
 const insertUser = db.prepare(
   'INSERT INTO users (name, email, password_hash, role, carnet, phone) VALUES (?, ?, ?, ?, ?, ?)',
 );
