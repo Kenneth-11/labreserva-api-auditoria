@@ -20,7 +20,7 @@ export function createApp() {
   );
   app.use(cors({ origin: config.corsOrigins }));
   app.use(express.json({ limit: '10kb' }));
-  app.use(morgan('dev'));
+  app.use(morgan(config.isProduction ? 'combined' : 'dev'));
   app.use(express.static('public'));
 
   app.use('/api', apiLimiter, apiRouter);

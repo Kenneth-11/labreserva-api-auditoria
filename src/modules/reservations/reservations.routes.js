@@ -4,6 +4,7 @@ import { HttpError } from '../../utils/http-error.js';
 import { requireAuth } from '../../middlewares/auth.js';
 import { parseId } from '../../utils/parse-id.js';
 import { validate } from '../../utils/validate.js';
+import { audit } from '../../lib/audit.js';
 import { labsRepository } from '../labs/labs.repository.js';
 import { reservationsRepository } from './reservations.repository.js';
 
@@ -36,7 +37,10 @@ reservationsRouter.get('/:id', (req, res) => {
   // El userId sale del token verificado, nunca de la URL ni del body.
   const reservation = reservationsRepository.findById(parseId(req.params.id), req.user.id);
   // 404 (no 403) para una reserva ajena: no confirma que exista.
-  if (!reservation) throw new HttpError(404, 'Reserva no encontrada');
+  if (!reservation) {
+    audit('reserva_ajena_o_inexistente', req, { reservationId: req.params.id });
+    throw new HttpError(404, 'Reserva no encontrada');
+  }
   res.json(reservation);
 });
 
@@ -59,6 +63,10 @@ reservationsRouter.post('/', (req, res) => {
 });
 
 reservationsRouter.delete('/:id', (req, res) => {
-  if (!reservationsRepository.remove(parseId(req.params.id), req.user.id)) throw new HttpError(404, 'Reserva no encontrada');
+  if (!reservationsRepository.remove(parseId(req.params.id), req.user.id)) {
+    audit('cancelacion_denegada', req, { reservationId: req.params.id });
+    throw new HttpError(404, 'Reserva no encontrada');
+  }
+  audit('reserva_cancelada', req, { reservationId: req.params.id });
   res.status(204).end();
 });

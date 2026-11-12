@@ -4,6 +4,7 @@ import { HttpError } from '../../utils/http-error.js';
 import { requireAuth, requireAdmin } from '../../middlewares/auth.js';
 import { parseId } from '../../utils/parse-id.js';
 import { validate } from '../../utils/validate.js';
+import { audit } from '../../lib/audit.js';
 import { labsRepository } from '../labs/labs.repository.js';
 import { reservationsRepository } from '../reservations/reservations.repository.js';
 import { usersRepository } from '../users/users.repository.js';
@@ -31,5 +32,6 @@ adminRouter.post('/labs', (req, res) => {
 
 adminRouter.delete('/users/:id', (req, res) => {
   if (!usersRepository.remove(parseId(req.params.id))) throw new HttpError(404, 'Usuario no encontrado');
+  audit('usuario_eliminado', req, { targetUserId: req.params.id });
   res.status(204).end();
 });

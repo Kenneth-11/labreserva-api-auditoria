@@ -4,6 +4,7 @@ import { HttpError } from '../../utils/http-error.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
 import { signToken } from '../../lib/jwt.js';
 import { validate } from '../../utils/validate.js';
+import { audit } from '../../lib/audit.js';
 import { loginLimiter, authIpLimiter } from '../../middlewares/rate-limit.js';
 import { usersRepository } from '../users/users.repository.js';
 
@@ -29,6 +30,7 @@ authRouter.post('/register', authIpLimiter, (req, res) => {
     passwordHash: hashPassword(password),
     role: 'estudiante',
   });
+  audit('registro', req, { userId: user.id, email: user.email });
   res.status(201).json(user);
 });
 
@@ -39,7 +41,11 @@ authRouter.post('/login', authIpLimiter, loginLimiter, (req, res) => {
   // Si el usuario no existe se verifica contra un hash falso para que el tiempo de respuesta sea parecido.
   const user = typeof email === 'string' ? usersRepository.findByEmailWithHash(email.trim().toLowerCase()) : undefined;
   const ok = verifyPassword(String(password ?? ''), user?.password_hash ?? DUMMY_HASH);
-  if (!user || !ok) throw new HttpError(401, 'Credenciales inválidas');
+  if (!user || !ok) {
+    audit('login_fallido', req, { email: String(email ?? '').slice(0, 120) });
+    throw new HttpError(401, 'Credenciales inválidas');
+  }
+  audit('login_ok', req, { userId: user.id, email: user.email });
 
   res.json({
     token: signToken(user),

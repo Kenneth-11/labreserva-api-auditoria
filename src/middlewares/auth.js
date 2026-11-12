@@ -1,5 +1,6 @@
 import { verifyToken } from '../lib/jwt.js';
 import { HttpError } from '../utils/http-error.js';
+import { audit } from '../lib/audit.js';
 import { usersRepository } from '../modules/users/users.repository.js';
 
 // Autenticación: ¿quién eres? Verifica la firma y expiración, y luego carga al usuario REAL desde la BD,
@@ -12,11 +13,15 @@ export function requireAuth(req, _res, next) {
   try {
     payload = verifyToken(token);
   } catch {
+    audit('token_invalido', req);
     throw new HttpError(401, 'Token inválido o vencido');
   }
 
   const user = usersRepository.findById(Number(payload.sub));
-  if (!user) throw new HttpError(401, 'Token inválido o vencido');
+  if (!user) {
+    audit('token_de_usuario_inexistente', req, { sub: String(payload.sub).slice(0, 20) });
+    throw new HttpError(401, 'Token inválido o vencido');
+  }
 
   req.user = { id: user.id, email: user.email, role: user.role };
   next();
@@ -26,7 +31,10 @@ export function requireAuth(req, _res, next) {
 export const requireRole =
   (...roles) =>
   (req, _res, next) => {
-    if (!roles.includes(req.user?.role)) throw new HttpError(403, 'No tiene permisos para esta operación');
+    if (!roles.includes(req.user?.role)) {
+      audit('acceso_denegado', req, { role: req.user?.role ?? null, requiere: roles });
+      throw new HttpError(403, 'No tiene permisos para esta operación');
+    }
     next();
   };
 
